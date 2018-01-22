@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/Baelyk/update-renegade-map/issues"
   },
-  "homepage": "https://github.com/Baelyk/update-renegade-map#readme"
+  "homepage": "https://github.com/Baelyk/update-renegade-map#readme",
+  "dependencies": {
+    "command-line-args": "^5.0.1",
+    "fs-jetpack": "^1.2.0",
+    "svgo": "^1.0.3"
+  }
 }

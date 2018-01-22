@@ -3,41 +3,75 @@ const SVGO = require('svgo')
 const path = require('path')
 const commandLineArgs = require('command-line-args')
 
-const svgo = new SVGO()
+const svgo = new SVGO({
+  plugins: [
+    {
+      removeViewBox: false
+    },
+    {
+      collapseGroups: false
+    }
+  ],
+  js2svg: {
+    pretty: true
+  }
+})
 const options = commandLineArgs([
   { /* The version of the map to append to the archived files */
     name: 'version',
     alias: 'v',
-    type: 'String'
+    type: String
   },
   { /* The path to the directory containing RIAMap.svg, political.png, and political-names.png */
     name: 'path',
     alias: 'p',
-    type: 'String'
+    type: String
+  },
+  { /* The path to the renegade-map directory */
+    name: 'out',
+    alias: 'o',
+    type: String
   },
   { /* The name(s) of new countries being added */
     name: 'new',
     alias: 'n',
-    type: 'String',
+    type: String,
     multiple: true
   }
 ])
-const paths = { // TODO: This can't be right
-  current: 'img/vector/current.svg',
-  svgArchive: `img/vector/archive/${options.version}.svg`,
-  political: `img/raster/political.png`,
-  politicalNames: `img/raster/politicalnames.png`,
-  politicalArchive: `img/raster/archive/political-${options.version}.png`,
-  politicalArchiveNames: `img/raster/archive/politicalnames-${options.version}.png`
+const paths = {
+  riaMap: path.resolve(options.path, `RIAMap-${options.version}.svg`),
+  current: path.join(options.out, 'img/vector/current.svg'),
+  svgArchive: path.join(options.out, `img/vector/archive/${options.version}.svg`),
+  political: path.join(options.out, `img/raster/political.png`),
+  politicalNames: path.join(options.out, `img/raster/politicalnames.png`),
+  politicalArchive: path.join(options.out, `img/raster/archive/political-${options.version}.png`),
+  politicalArchiveNames: path.join(options.out, `img/raster/archive/politicalnames-${options.version}.png`)
 }
 
 /* Make sure the version hasn't been used already */
 void [paths.svgArchive, paths.politicalArchive, paths.politicalArchiveNames].forEach(file => {
-  if (fs.exists(file)) throw new Error(`File ${file} already exists! This probably means the version (${options.version}) is incorrect.`)
+  if (fs.exists(file)) throw new Error(`File '${file}' already exists! This probably means the version '${options.version}' is incorrect.`)
 })
 
 /* Optimize RIAMap.svg */
-svgo.optimize(fs.read(path.join(options.path, 'RIAMap.svg')), { path: path.resolve(__dirname, options.path) })
+svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
   .then(svg => { // `svg` is the optimized version of RIAMap.svg
-    console.log(svg.data)
+    const optimized = svg.data.replace('viewBox', 'viewbox')
+    const html = optimized.replace('<style>', '<!-- <style>').replace('</style>', '</style> -->')
+    /* Export a test copy */
+    fs.write('test.svg', html)
+    /* Export the optimized version */
+    fs.write(paths.current, optimized)
+    /* Export the archive version */
+    fs.write(paths.svgArchive, optimized)
   })
+  .catch(() => {
+    throw new Error('The SVG optimization process went wrong!')
+  })
+
+/* Move the rasters to their places */
+fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrite: true })
+fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
+fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
+fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
