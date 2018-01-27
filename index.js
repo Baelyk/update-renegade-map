@@ -63,18 +63,18 @@ void [paths.svgArchive, paths.politicalArchive, paths.politicalArchiveNames].for
 svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
   .then(svg => { // `svg` is the optimized version of RIAMap.svg
     const optimized = svg.data.replace('viewBox', 'viewbox')
-    const indexHTML = fs.read(paths.indexHTML)
     const html = optimized.replace('<style>', '<!-- <style>').replace('</style>', '</style> -->')
     /* Export a test copy */
-    fs.write('test.svg', html)
+    // fs.write('test.svg', html)
     /* Export the optimized version */
     fs.write(paths.current, optimized)
     /* Export the archive version */
     fs.write(paths.svgArchive, optimized)
     /* Put it into index.html */
+    const indexHTML = fs.read(paths.indexHTML)
     let indexBeginning = indexHTML.substr(0, indexHTML.indexOf('<div class="map" id="mapdiv">') + 30) // 30: length of searchValue + newline
     let indexEnd = indexHTML.substring(indexHTML.indexOf('</div>\n        <div id="countries-div" class="countries">'))
-    fs.write('test.html', indexBeginning + html + '        ' + indexEnd)
+    fs.write(paths.indexHTML, indexBeginning + html + '        ' + indexEnd)
   })
   .catch(() => {
     throw new Error('The SVG optimization process went wrong!')
