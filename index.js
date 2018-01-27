@@ -46,7 +46,12 @@ const paths = {
   political: path.join(options.out, `img/raster/political.png`),
   politicalNames: path.join(options.out, `img/raster/politicalnames.png`),
   politicalArchive: path.join(options.out, `img/raster/archive/political-${options.version}.png`),
-  politicalArchiveNames: path.join(options.out, `img/raster/archive/politicalnames-${options.version}.png`)
+  politicalArchiveNames: path.join(options.out, `img/raster/archive/politicalnames-${options.version}.png`),
+
+  indexHTML: path.join(options.out, 'index.html'),
+
+  countriesJSON: path.join(options.out, 'src/countries.json'),
+  svgJS: path.join(options.out, 'src/svg.js')
 }
 
 /* Make sure the version hasn't been used already */
@@ -58,6 +63,7 @@ void [paths.svgArchive, paths.politicalArchive, paths.politicalArchiveNames].for
 svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
   .then(svg => { // `svg` is the optimized version of RIAMap.svg
     const optimized = svg.data.replace('viewBox', 'viewbox')
+    const indexHTML = fs.read(paths.indexHTML)
     const html = optimized.replace('<style>', '<!-- <style>').replace('</style>', '</style> -->')
     /* Export a test copy */
     fs.write('test.svg', html)
@@ -65,6 +71,10 @@ svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
     fs.write(paths.current, optimized)
     /* Export the archive version */
     fs.write(paths.svgArchive, optimized)
+    /* Put it into index.html */
+    let indexBeginning = indexHTML.substr(0, indexHTML.indexOf('<div class="map" id="mapdiv">') + 30) // 30: length of searchValue + newline
+    let indexEnd = indexHTML.substring(indexHTML.indexOf('</div>\n        <div id="countries-div" class="countries">'))
+    fs.write('test.html', indexBeginning + html + '        ' + indexEnd)
   })
   .catch(() => {
     throw new Error('The SVG optimization process went wrong!')
@@ -75,3 +85,18 @@ fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrit
 fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
 fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
 fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
+
+/* Add new countries */
+let countries = fs.read(paths.countriesJSON, 'json')
+options.new.forEach(country => {
+  countries.push({
+    id: country.replace(/ /gi, '-'),
+    name: country
+  })
+})
+fs.write(paths.countriesJSON, countries)
+
+/* Put countries.json into svg.js */
+let svgJS = fs.read(paths.svgJS)
+svgJS = svgJS.substring(svgJS.indexOf('/* !!END!! countries.json */'))
+fs.write(paths.svgJS, '/* eslint-disable quotes */\nconst countryInfo = ' + JSON.stringify(countries, null, 2) + '\n' + svgJS)
