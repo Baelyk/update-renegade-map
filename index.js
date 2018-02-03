@@ -6,45 +6,9 @@ const commandLineArgs = require('command-line-args')
 const svgo = new SVGO({
   plugins: [
     {
-      cleanupAttrs: true,
-      cleanupEnableBackground: true,
-      cleanupIDs: false, // Important
-      cleanupListOfValues: false,
-      cleanupNumericValues: true,
-      collapseGroups: false,
-      convertColors: true,
-      convertPathData: true,
-      convertShapeToPath: true,
-      convertStyleToAttrs: true,
-      convertTransform: true,
-      inlineStyles: true,
-      mergePaths: true,
-      minifyStyles: true,
-      moveElemsAttrsToGroup: true,
-      moveGroupAttrsToElems: true,
-      removeComments: true,
-      removeDesc: true,
-      removeDimensions: false,
-      removeDoctype: true,
-      removeEditorsNSData: true,
-      removeEmptyAttrs: true,
-      removeEmptyContainers: true,
-      removeEmptyText: true,
-      removeHiddenElems: true,
-      removeMetadata: true,
-      removeNonInheritableGroupAttrs: true,
-      removeRasterImages: true,
-      removeScriptElement: false,
-      removeStyleElement: false,
-      removeTitle: false,
-      removeUnknownsAndDefaults: true,
-      removeUnusedNS: true,
-      removeUselessDefs: true,
-      removeUselessStrokeAndFill: true,
-      removeViewBox: false, // Important
-      removeXMLNS: false,
-      removeXMLProcInst: true,
-      sortAttrs: false
+      collapseGroups: false
+    }, {
+      removeViewBox: false
     }
   ],
   js2svg: {
@@ -104,7 +68,7 @@ svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
     /* Export the optimized version */
     fs.write(paths.current, optimized)
     /* Export the archive version */
-    // fs.write(paths.svgArchive, optimized)
+    fs.write(paths.svgArchive, optimized)
     /* Put it into index.html */
     const indexHTML = fs.read(paths.indexHTML)
     let indexBeginning = indexHTML.substr(0, indexHTML.indexOf('<div class="map" id="mapdiv">') + 30) // 30: length of searchValue + newline
@@ -117,10 +81,10 @@ svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
   })
 
 /* Move the rasters to their places */
-// fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrite: true })
-// fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
-// fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
-// fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
+fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrite: true })
+fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
+fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
+fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
 
 /* Add new countries */
 let countries = fs.read(paths.countriesJSON, 'json')
