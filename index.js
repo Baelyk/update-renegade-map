@@ -6,10 +6,45 @@ const commandLineArgs = require('command-line-args')
 const svgo = new SVGO({
   plugins: [
     {
-      removeViewBox: false
-    },
-    {
-      collapseGroups: false
+      cleanupAttrs: true,
+      cleanupEnableBackground: true,
+      cleanupIDs: false, // Important
+      cleanupListOfValues: false,
+      cleanupNumericValues: true,
+      collapseGroups: false,
+      convertColors: true,
+      convertPathData: true,
+      convertShapeToPath: true,
+      convertStyleToAttrs: true,
+      convertTransform: true,
+      inlineStyles: true,
+      mergePaths: true,
+      minifyStyles: true,
+      moveElemsAttrsToGroup: true,
+      moveGroupAttrsToElems: true,
+      removeComments: true,
+      removeDesc: true,
+      removeDimensions: false,
+      removeDoctype: true,
+      removeEditorsNSData: true,
+      removeEmptyAttrs: true,
+      removeEmptyContainers: true,
+      removeEmptyText: true,
+      removeHiddenElems: true,
+      removeMetadata: true,
+      removeNonInheritableGroupAttrs: true,
+      removeRasterImages: true,
+      removeScriptElement: false,
+      removeStyleElement: false,
+      removeTitle: false,
+      removeUnknownsAndDefaults: true,
+      removeUnusedNS: true,
+      removeUselessDefs: true,
+      removeUselessStrokeAndFill: true,
+      removeViewBox: false, // Important
+      removeXMLNS: false,
+      removeXMLProcInst: true,
+      sortAttrs: false
     }
   ],
   js2svg: {
@@ -40,7 +75,7 @@ const options = commandLineArgs([
   }
 ])
 const paths = {
-  riaMap: path.resolve(options.path, `RIAMap-${options.version}.svg`),
+  riaMap: path.resolve(options.path, `RIAMap.svg`),
   current: path.join(options.out, 'img/vector/current.svg'),
   svgArchive: path.join(options.out, `img/vector/archive/${options.version}.svg`),
   political: path.join(options.out, `img/raster/political.png`),
@@ -69,7 +104,7 @@ svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
     /* Export the optimized version */
     fs.write(paths.current, optimized)
     /* Export the archive version */
-    fs.write(paths.svgArchive, optimized)
+    // fs.write(paths.svgArchive, optimized)
     /* Put it into index.html */
     const indexHTML = fs.read(paths.indexHTML)
     let indexBeginning = indexHTML.substr(0, indexHTML.indexOf('<div class="map" id="mapdiv">') + 30) // 30: length of searchValue + newline
@@ -77,24 +112,27 @@ svgo.optimize(fs.read(paths.riaMap), { path: paths.riaMap })
     fs.write(paths.indexHTML, indexBeginning + html + '        ' + indexEnd)
   })
   .catch(() => {
+    console.log(paths.riaMap)
     throw new Error('The SVG optimization process went wrong!')
   })
 
 /* Move the rasters to their places */
-fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrite: true })
-fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
-fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
-fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
+// fs.copy(path.resolve(options.path, 'political.png'), paths.political, { overwrite: true })
+// fs.copy(path.resolve(options.path, 'political.png'), paths.politicalArchive)
+// fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalNames, { overwrite: true })
+// fs.copy(path.resolve(options.path, 'politicalnames.png'), paths.politicalArchiveNames)
 
 /* Add new countries */
 let countries = fs.read(paths.countriesJSON, 'json')
-options.new.forEach(country => {
-  countries.push({
-    id: country.replace(/ /gi, '-'),
-    name: country
+if (options.new) {
+  options.new.forEach(country => {
+    countries.push({
+      id: country.replace(/ /gi, '-'),
+      name: country
+    })
   })
-})
-fs.write(paths.countriesJSON, countries)
+  fs.write(paths.countriesJSON, countries)
+}
 
 /* Put countries.json into svg.js */
 let svgJS = fs.read(paths.svgJS)
